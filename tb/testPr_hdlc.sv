@@ -35,69 +35,72 @@ program testPr_hdlc(
   // VerifyAbortReceive should verify correct value in the Rx status/control
   // register, and that the Rx data buffer is zero after abort.
   task VerifyAbortReceive(logic [127:0][7:0] data, int Size);
-    logic [7:0] ReadData;
+    logic [7:0] ReadDataSC;
     logic [7:0] ReadDataBuf;
-    // INSERT CODE HERE
 
-    ReadAddress(Rx_Buff_address, ReadDataBuf);
-    ReadAddress(Rx_Buff_address, ReadData);
-    ready_assert: assert(ReadData[0] === '0') begin
+    ReadAddress(`Rx_Buff_address, ReadDataBuf);
+    ReadAddress(`Rx_SC_address, ReadDataSC);
+    ready_assert: assert(ReadDataSC[0] === 0) begin
     end else begin
-	    $error("[%0t] VerifyAbortReceive rx should not be ready\n", $time);
+	    $error("[%0t] VerifyAbortReceive rx should not be ready", $time);
     end
 
-    frame_error_assert: assert(ReadData[2] === '0') begin
+    frame_error_assert: assert(ReadDataSC[2] === 0) begin
     end else begin
-	    $error("[%0t] VerifyAbortReceive frame error\n", $time);
+	    $error("[%0t] VerifyAbortReceive frame error", $time);
     end
 
-    abort_signal_assert: assert(ReadData[3] === '1') begin
+    abort_signal_assert: assert(ReadDataSC[3] === 1) begin
     end else begin
-	    $error("[%0t] VerifyAbortReceive abort signal error\n", $time);
+	    $error("[%0t] VerifyAbortReceive abort signal error", $time);
+    end
+
+    overflow_signal_assert: assert(ReadDataSC[4] === 0) begin
+    end else begin
+	    $error("[%0t] VerifyAbortReceive overflow error", $time);
     end
 
     buffer_zero_assert: assert(ReadDataBuf === 8'b00000000) begin
     end else begin
-	    $error("[%0t] VerifyAbortReceive data buffer not zero\n", $time);
+	    $error("[%0t] VerifyAbortReceive data buffer not zero", $time);
     end
-
   endtask
 
   // VerifyNormalReceive should verify correct value in the Rx status/control
   // register, and that the Rx data buffer contains correct data.
   task VerifyNormalReceive(logic [127:0][7:0] data, int Size);
-    logic [7:0] ReadData;
+    logic [7:0] ReadDataSC;
     logic [7:0] ReadDataBuf;
     wait(uin_hdlc.Rx_Ready);
 
-    ReadAddress(Rx_SC_address, ReadData);
+    ReadAddress(`Rx_SC_address, ReadDataSC);
 
-    ready_assert: assert(ReadData[0] === '1') begin
+    ready_assert: assert(ReadDataSC[0] === 1) begin
     end else begin
-	    $error("[%0t] VerifyNormalReceive rx not ready\n", $time);
+	    $error("[%0t] VerifyNormalReceive rx not ready", $time);
     end
 
-    frame_error_assert: assert(ReadData[2] === '0') begin
+    frame_error_assert: assert(ReadDataSC[2] === 0) begin
     end else begin
-	    $error("[%0t] VerifyNormalReceive Frame error\n", $time);
+	    $error("[%0t] VerifyNormalReceive Frame error", $time);
     end
 
-    abort_signal_assert: assert(ReadData[3] === '0') begin
+    abort_signal_assert: assert(ReadDataSC[3] === 0) begin
     end else begin
-	    $error("[%0t] VerifyNormalReceive abort signal error\n", $time);
+	    $error("[%0t] VerifyNormalReceive abort signal error", $time);
     end
 
-    overflow_assert: assert(ReadData[4] === '0') begin
+    overflow_assert: assert(ReadDataSC[4] === 0) begin
     end else begin
-	    $error("[%0t] VerifyNormalReceive overflow error\n", $time);
+	    $error("[%0t] VerifyNormalReceive overflow error", $time);
     end
 
 
     for(int i = 0; i < Size; i++) begin
-            ReadAddress(Rx_Buff_address, ReadDataBuf);
+            ReadAddress(`Rx_Buff_address, ReadDataBuf);
 	    buf_assert: assert(ReadDataBuf === data[i]) begin
 	    end else begin
-		    $error("[%0t] VerifyNormalReceive data mismatch\n", $time);
+		    $error("[%0t] VerifyNormalReceive data mismatch", $time);
 	    end
     end
   endtask
@@ -105,30 +108,28 @@ program testPr_hdlc(
   // VerifyNormalReceive should verify correct value in the Rx status/control
   // register, and that the Rx data buffer contains correct data.
   task VerifyOverflowReceive(logic [127:0][7:0] data, int Size);
-    logic [7:0] ReadData;
+    logic [7:0] ReadDataSC;
     wait(uin_hdlc.Rx_Ready);
-
-    // INSERT CODE HERE
   
-    ReadAddress(Rx_SC_address, ReadData);
-    ready_assert: assert(ReadData[0] === '1') begin
+    ReadAddress(`Rx_SC_address, ReadDataSC);
+    ready_assert: assert(ReadDataSC[0] === 1) begin
     end else begin
-	    $error("[%0t] VerifyOverflowReceive rx not ready\n", $time);
+	    $error("[%0t] VerifyOverflowReceive rx not ready", $time);
     end
 
-    frame_error_assert: assert(ReadData[2] === '0') begin
+    frame_error_assert: assert(ReadDataSC[2] === 0) begin
     end else begin
-	    $error("[%0t] VerifyOverflowReceive frame error\n", $time);
+	    $error("[%0t] VerifyOverflowReceive frame error", $time);
     end
     
-    abort_signal_assert: assert(ReadData[3] === '0') begin
+    abort_signal_assert: assert(ReadDataSC[3] === 0) begin
     end else begin
-	    $error("[%0t] VerifyOverflowReceive abort signal error\n", $time);
+	    $error("[%0t] VerifyOverflowReceive abort signal error", $time);
     end
 
-    overflow_assert: assert(ReadData[4] === '0') begin
+    overflow_assert: assert(ReadDataSC[4] === 1) begin
     end else begin
-	    $error("[%0t] VerifyOverflowReceive overflow error\n", $time);
+	    $error("[%0t] VerifyOverflowReceive overflow error", $time);
     end
   endtask
 
