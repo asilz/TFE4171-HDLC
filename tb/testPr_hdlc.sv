@@ -41,26 +41,31 @@ program testPr_hdlc(
     ReadAddress(`Rx_Buff_address, ReadDataBuf);
     ReadAddress(`Rx_SC_address, ReadDataSC);
     ready_assert: assert(ReadDataSC[0] === 0) begin
+	    $display("[%0t] PASS. Rx_Buff has no data", $time);
     end else begin
 	    $error("[%0t] VerifyAbortReceive rx should not be ready", $time);
     end
 
     frame_error_assert: assert(ReadDataSC[2] === 0) begin
+	    $display("[%0t] PASS. No Frame error", $time);
     end else begin
 	    $error("[%0t] VerifyAbortReceive frame error", $time);
     end
 
     abort_signal_assert: assert(ReadDataSC[3] === 1) begin
+	    $display("[%0t] PASS. No Abort signal", $time);
     end else begin
 	    $error("[%0t] VerifyAbortReceive abort signal error", $time);
     end
 
     overflow_signal_assert: assert(ReadDataSC[4] === 0) begin
+	    $display("[%0t] PASS. No Overflow signal", $time);
     end else begin
 	    $error("[%0t] VerifyAbortReceive overflow error", $time);
     end
 
     buffer_zero_assert: assert(ReadDataBuf === 8'b00000000) begin
+	    $display("[%0t] PASS. Rx_Buff is empty", $time);
     end else begin
 	    $error("[%0t] VerifyAbortReceive data buffer not zero", $time);
     end
@@ -76,21 +81,25 @@ program testPr_hdlc(
     ReadAddress(`Rx_SC_address, ReadDataSC);
 
     ready_assert: assert(ReadDataSC[0] === 1) begin
+	    $display("[%0t] PASS. Rx_Buff has data to read", $time);
     end else begin
 	    $error("[%0t] VerifyNormalReceive rx not ready", $time);
     end
 
     frame_error_assert: assert(ReadDataSC[2] === 0) begin
+	    $display("[%0t] PASS. No Frame error", $time);
     end else begin
 	    $error("[%0t] VerifyNormalReceive Frame error", $time);
     end
 
     abort_signal_assert: assert(ReadDataSC[3] === 0) begin
+	    $display("[%0t] PASS. No Abort signal", $time);
     end else begin
 	    $error("[%0t] VerifyNormalReceive abort signal error", $time);
     end
 
     overflow_assert: assert(ReadDataSC[4] === 0) begin
+	    $display("[%0t] PASS. No Overflow signal", $time);
     end else begin
 	    $error("[%0t] VerifyNormalReceive overflow error", $time);
     end
@@ -99,6 +108,7 @@ program testPr_hdlc(
     for(int i = 0; i < Size; i++) begin
             ReadAddress(`Rx_Buff_address, ReadDataBuf);
 	    buf_assert: assert(ReadDataBuf === data[i]) begin
+		    $display("[%0t] PASS. Rx_Buff has correct data", $time);
 	    end else begin
 		    $error("[%0t] VerifyNormalReceive data mismatch", $time);
 	    end
@@ -113,21 +123,25 @@ program testPr_hdlc(
   
     ReadAddress(`Rx_SC_address, ReadDataSC);
     ready_assert: assert(ReadDataSC[0] === 1) begin
+	    $display("[%0t] Rx_Buff has data to read", $time);
     end else begin
 	    $error("[%0t] VerifyOverflowReceive rx not ready", $time);
     end
 
     frame_error_assert: assert(ReadDataSC[2] === 0) begin
+	    $display("[%0t] No Frame error", $time);
     end else begin
 	    $error("[%0t] VerifyOverflowReceive frame error", $time);
     end
     
     abort_signal_assert: assert(ReadDataSC[3] === 0) begin
+	    $display("[%0t] No Abort signal", $time);
     end else begin
 	    $error("[%0t] VerifyOverflowReceive abort signal error", $time);
     end
 
     overflow_assert: assert(ReadDataSC[4] === 1) begin
+	    $display("[%0t] No Overflow signal", $time);
     end else begin
 	    $error("[%0t] VerifyOverflowReceive overflow error", $time);
     end
@@ -288,9 +302,9 @@ program testPr_hdlc(
 
     //Enable FCS
     if(!Overflow && !NonByteAligned)
-      WriteAddress(RXSC, 8'h20);
+      WriteAddress(`Rx_SC_address, 8'h20);
     else
-      WriteAddress(RXSC, 8'h00);
+      WriteAddress(`Rx_SC_address, 8'h00);
 
     //Generate stimulus
     InsertFlagOrAbort(1);

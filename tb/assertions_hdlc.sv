@@ -57,7 +57,7 @@ module assertions_hdlc (
 
   //If abort is detected during valid frame. then abort signal should go high
   property RX_AbortSignal;
-    @(posedge Clk) Rx_ValidFrame and Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 !Rx;
+    @(posedge Clk) Rx_ValidFrame and Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 !Rx |-> Rx_AbortSignal;
   endproperty
 
   RX_AbortSignal_Assert : assert property (RX_AbortSignal) begin
