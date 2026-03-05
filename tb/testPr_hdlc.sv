@@ -38,8 +38,11 @@ program testPr_hdlc(
     logic [7:0] ReadDataSC;
     logic [7:0] ReadDataBuf;
 
-    ReadAddress(`Rx_Buff_address, ReadDataBuf);
-    ReadAddress(`Rx_SC_address, ReadDataSC);
+    
+    // Part A: Immediate Assertions: Task 2
+
+    ReadAddress(`Rx_Buff_address, ReadDataBuf); // Read RX data buffer
+    ReadAddress(`Rx_SC_address, ReadDataSC); // Read RX status/control register
     ready_assert: assert(ReadDataSC[0] === 0) begin
 	    $display("[%0t] PASS. Rx_Buff has no data", $time);
     end else begin
@@ -78,7 +81,9 @@ program testPr_hdlc(
     logic [7:0] ReadDataBuf;
     wait(uin_hdlc.Rx_Ready);
 
-    ReadAddress(`Rx_SC_address, ReadDataSC);
+    
+    // Part A: Immediate Assertions: Task 1
+    ReadAddress(`Rx_SC_address, ReadDataSC); // Read RX status/control register
 
     ready_assert: assert(ReadDataSC[0] === 1) begin
 	    $display("[%0t] PASS. Rx_Buff has data to read", $time);
@@ -106,7 +111,7 @@ program testPr_hdlc(
 
 
     for(int i = 0; i < Size; i++) begin
-            ReadAddress(`Rx_Buff_address, ReadDataBuf);
+            ReadAddress(`Rx_Buff_address, ReadDataBuf); // Read RX data buffer
 	    buf_assert: assert(ReadDataBuf === data[i]) begin
 		    $display("[%0t] PASS. Rx_Buff has correct data", $time);
 	    end else begin
@@ -120,8 +125,9 @@ program testPr_hdlc(
   task VerifyOverflowReceive(logic [127:0][7:0] data, int Size);
     logic [7:0] ReadDataSC;
     wait(uin_hdlc.Rx_Ready);
-  
-    ReadAddress(`Rx_SC_address, ReadDataSC);
+
+    // Part A: Immediate Assertions: Task 3
+    ReadAddress(`Rx_SC_address, ReadDataSC); // Read RX status/control register
     ready_assert: assert(ReadDataSC[0] === 1) begin
 	    $display("[%0t] Rx_Buff has data to read", $time);
     end else begin

@@ -34,7 +34,7 @@ module assertions_hdlc (
   /*******************************************
    *  Verify correct Rx_FlagDetect behavior  *
    *******************************************/
-
+  // Part A: Concurrent Assertions: Task 1
   sequence Rx_flag;
     !Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 !Rx;
   endsequence
@@ -56,6 +56,7 @@ module assertions_hdlc (
    ********************************************/
 
   //If abort is detected during valid frame. then abort signal should go high
+  // Part A: Concurrent Assertions: Task 2
   property RX_AbortSignal;
     @(posedge Clk) Rx_ValidFrame and Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 !Rx |-> Rx_AbortSignal;
   endproperty
