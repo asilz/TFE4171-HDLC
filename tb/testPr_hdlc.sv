@@ -129,25 +129,25 @@ program testPr_hdlc(
     // Part A: Immediate Assertions: Task 3
     ReadAddress(`Rx_SC_address, ReadDataSC); // Read RX status/control register
     ready_assert: assert(ReadDataSC[0] === 1) begin
-	    $display("[%0t] Rx_Buff has data to read", $time);
+	    $display("[%0t] PASS. Rx_Buff has data to read", $time);
     end else begin
 	    $error("[%0t] VerifyOverflowReceive rx not ready", $time);
     end
 
     frame_error_assert: assert(ReadDataSC[2] === 0) begin
-	    $display("[%0t] No Frame error", $time);
+	    $display("[%0t] PASS. No Frame error", $time);
     end else begin
 	    $error("[%0t] VerifyOverflowReceive frame error", $time);
     end
     
     abort_signal_assert: assert(ReadDataSC[3] === 0) begin
-	    $display("[%0t] No Abort signal", $time);
+	    $display("[%0t] PASS. No Abort signal", $time);
     end else begin
 	    $error("[%0t] VerifyOverflowReceive abort signal error", $time);
     end
 
     overflow_assert: assert(ReadDataSC[4] === 1) begin
-	    $display("[%0t] No Overflow signal", $time);
+	    $display("[%0t] PASS. Overflow signal", $time);
     end else begin
 	    $error("[%0t] VerifyOverflowReceive overflow error", $time);
     end
