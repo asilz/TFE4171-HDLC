@@ -241,20 +241,26 @@ program testPr_hdlc(
 	      historyBuf[2] = historyBuf[1];
 	      historyBuf[1] = historyBuf[0];
 	      historyBuf[0] = uin_hdlc.Tx;
-	      if(historyBuf == 5'b11111) begin
-		      $display("skipping inserted 0");
-		      @(posedge uin_hdlc.Clk);
-          historyBuf[4] = historyBuf[3];
-	        historyBuf[3] = historyBuf[2];
-	        historyBuf[2] = historyBuf[1];
-	        historyBuf[1] = historyBuf[0];
-	        historyBuf[0] = uin_hdlc.Tx;
-	      end
 	      buf_assert: assert(uin_hdlc.Tx === data[i][j]) begin
 		      $display("[%0t] PASS. Tx_Buff has correct data, received: 0b%b", $time, uin_hdlc.Tx);
 	      end else begin
 		      $error("[%0t] VerifyNormalTransmit data mismatch, expected: 0b%b, actual: 0b%b", $time, data[i][j], uin_hdlc.Tx);
           TbErrorCnt++;
+	      end
+	      if(historyBuf == 5'b11111) begin
+		      @(posedge uin_hdlc.Clk);
+		      $display("skipping inserted 0");
+	              skip_assert: assert(uin_hdlc.Tx === 1'b0) begin
+		        $display("[%0t] PASS. 0 inserted for skipping", $time, uin_hdlc.Tx);
+	              end else begin
+		        $error("[%0t] VerifyNormalTransmit 0 not inserted correctly", $time);
+                        TbErrorCnt++;
+		      end
+                      historyBuf[4] = historyBuf[3];
+	              historyBuf[3] = historyBuf[2];
+	              historyBuf[2] = historyBuf[1];
+	              historyBuf[1] = historyBuf[0];
+	              historyBuf[0] = uin_hdlc.Tx;
 	      end
       end
     end
