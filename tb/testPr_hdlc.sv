@@ -20,6 +20,9 @@
 `define Rx_SC_address 2
 `define Rx_Buff_address 3
 
+`define Tx_SC_address 0
+`define Tx_Buff_address 1
+
 program testPr_hdlc(
   in_hdlc uin_hdlc
 );
@@ -153,6 +156,144 @@ program testPr_hdlc(
     end
   endtask
 
+  /* 9 */
+  task VerifyAbortTransmit(ReceiveData, Size);
+    logic [7:0] ReadDataSC;
+    logic [7:0] ReadDataBuf;
+
+    ReadAddress(`Tx_Buff_address, ReadDataBuf); // Read TX data buffer
+    ReadAddress(`Tx_SC_address, ReadDataSC); // Read TX status/control register
+    ready_assert: assert(ReadDataSC[0] === 0) begin
+	    $display("[%0t] PASS. Tx is not done", $time);
+    end else begin
+	    $error("[%0t] VerifyAbortTransmit tx should not be done", $time);
+    end
+
+    abort_transmission_early_assert: assert(ReadDataSC[3] === 0) begin
+      $display("[%0t] PASS. Abort transmit signal not high too early", $time);
+    end else begin
+	    $error("[%0t] VerifyAbortTransmit abort frame signal error", $time);
+    end
+    
+    @(posedge uin_hdlc.Clk);
+    @(posedge uin_hdlc.Clk);
+
+    abort_transmission_assert: assert(ReadDataSC[3] === 1) begin
+      $display("[%0t] PASS. Abort transmit signal", $time);
+    end else begin
+	    $error("[%0t] VerifyAbortTransmit abort frame signal error", $time);
+    end
+
+  endtask
+
+  task VerifyNormalTransmit(logic [127:0][7:0] data, int Size);
+    logic [7:0] ReadDataSC;
+    logic [7:0] ReadDataBuf;
+    logic [4:0] historyBuf;
+    logic [7:0] flag;
+
+    ReadAddress(`Tx_SC_address, ReadDataSC); // Read RX status/control register
+
+    done_assert: assert(ReadDataSC[0] === 0) begin
+	    $display("[%0t] PASS. Tx not done", $time);
+    end else begin
+	    $error("[%0t] VerifyNormalTransmit done asserted", $time);
+      TbErrorCnt++;
+    end
+
+    abort_transmission_assert: assert(ReadDataSC[3] === 0) begin
+	    $display("[%0t] PASS. Transmission not aborted", $time);
+    end else begin
+	    $error("[%0t] VerifyNormalTransmit abort transmission error", $time);
+      TbErrorCnt++;
+    end
+
+    full_assert: assert(ReadDataSC[4] === 0) begin
+	    $display("[%0t] PASS. No full signal", $time);
+    end else begin
+	    $error("[%0t] VerifyNormalTransmit full error", $time);
+      TbErrorCnt++;
+    end
+
+    @(negedge uin_hdlc.Tx);
+    flag = 8'b0111_1110;
+
+        // Check flag
+        for (int f = 0; f < 8; f++) begin
+            if (f != 0) begin
+                @(posedge uin_hdlc.Clk);
+            end
+            assert(uin_hdlc.Tx == flag[f]) begin
+              $display("PASS: VerifyNormalTransmit:: Expected Tx_flag = 0b%b, Received Tx_flag = 0b%b", flag[f], uin_hdlc.Tx);
+            end else begin
+                $error("FAIL: VerifyNormalTransmit:: Expected Tx_flag = 0b%b, Received Tx_flag = 0b%b", flag[f], uin_hdlc.Tx);
+                TbErrorCnt++;
+            end
+        end
+    
+    //repeat(135) @(posedge uin_hdlc.Clk);
+    historyBuf = 5'b00000;
+    for(int i = 0; i < Size; i++) begin
+      for(int j = 0; j < 8; j++) begin
+        @(posedge uin_hdlc.Clk);
+	      historyBuf[4] = historyBuf[3];
+	      historyBuf[3] = historyBuf[2];
+	      historyBuf[2] = historyBuf[1];
+	      historyBuf[1] = historyBuf[0];
+	      historyBuf[0] = uin_hdlc.Tx;
+	      if(historyBuf == 5'b11111) begin
+		      $display("skipping inserted 0");
+		      @(posedge uin_hdlc.Clk);
+          historyBuf[4] = historyBuf[3];
+	        historyBuf[3] = historyBuf[2];
+	        historyBuf[2] = historyBuf[1];
+	        historyBuf[1] = historyBuf[0];
+	        historyBuf[0] = uin_hdlc.Tx;
+	      end
+	      buf_assert: assert(uin_hdlc.Tx === data[i][j]) begin
+		      $display("[%0t] PASS. Tx_Buff has correct data, received: 0b%b", $time, uin_hdlc.Tx);
+	      end else begin
+		      $error("[%0t] VerifyNormalTransmit data mismatch, expected: 0b%b, actual: 0b%b", $time, data[i][j], uin_hdlc.Tx);
+          TbErrorCnt++;
+	      end
+      end
+    end
+  endtask
+
+  task VerifyOverflowTransmit(logic [127:0][7:0] data, int Size);
+    logic [7:0] ReadDataSC;
+    wait(uin_hdlc.Rx_Ready);
+
+    ReadAddress(`Rx_SC_address, ReadDataSC); // Read RX status/control register
+    ready_assert: assert(ReadDataSC[0] === 1) begin
+	    $display("[%0t] PASS. Rx_Buff has data to read", $time);
+    end else begin
+	    $error("[%0t] VerifyOverflowReceive rx not ready", $time);
+      TbErrorCnt++;
+    end
+
+    frame_error_assert: assert(ReadDataSC[2] === 0) begin
+	    $display("[%0t] PASS. No Frame error", $time);
+    end else begin
+	    $error("[%0t] VerifyOverflowReceive frame error", $time);
+      TbErrorCnt++;
+    end
+    
+    abort_signal_assert: assert(ReadDataSC[3] === 0) begin
+	    $display("[%0t] PASS. No Abort signal", $time);
+    end else begin
+	    $error("[%0t] VerifyOverflowReceive abort signal error", $time);
+      TbErrorCnt++;
+    end
+
+    overflow_assert: assert(ReadDataSC[4] === 1) begin
+	    $display("[%0t] PASS. Overflow signal", $time);
+    end else begin
+	    $error("[%0t] VerifyOverflowReceive overflow error", $time);
+      TbErrorCnt++;
+    end
+  endtask
+
   /****************************************************************************
    *                                                                          *
    *                             Simulation code                              *
@@ -177,6 +318,7 @@ program testPr_hdlc(
     Receive( 25, 0, 0, 0, 0, 0, 0); //Normal
     Receive( 47, 0, 0, 0, 0, 0, 0); //Normal
 
+    Transmit( 47, 0, 0, 0, 0, 0, 0); //Normal
     $display("*************************************************************");
     $display("%t - Finishing Test Program", $time);
     $display("*************************************************************");
@@ -272,6 +414,17 @@ program testPr_hdlc(
     end
   endtask
 
+  task MakeTxStimulus(input logic [127:0][7:0] Data, input int Size, input logic [3:0][7:0] OverflowData, input int OverflowSize);
+        
+        for (int i = 0; i < Size; i++) begin
+            WriteAddress(`Tx_Buff_address, Data[i]);
+        end         
+        for (int i = 0; i < OverflowSize; i++) begin
+            WriteAddress(`Tx_Buff_address, OverflowData[i]);
+        end
+	
+  endtask
+
   task Receive(int Size, int Abort, int FCSerr, int NonByteAligned, int Overflow, int Drop, int SkipRead);
     logic [127:0][7:0] ReceiveData;
     logic       [15:0] FCSBytes;
@@ -342,6 +495,97 @@ program testPr_hdlc(
       VerifyOverflowReceive(ReceiveData, Size);
     else if(!SkipRead)
       VerifyNormalReceive(ReceiveData, Size);
+
+    #5000ns;
+  endtask
+
+task PrintByteArrayHex(input string name, input logic [127:0][7:0] arr, input int size);
+  $display("%s:", name);
+  for (int i = 0; i < size; i++) begin
+    $write("%02h ", arr[i]);
+  end
+  $write("\n");
+endtask
+
+task PrintTxBufferHex(input int size);
+  $display("Tx_DataArray:");
+  for (int i = 0; i < size; i++) begin
+    $write("%02h ", uin_hdlc.Tx_DataArray[i]);
+  end
+  $write("\n");
+endtask
+
+  task Transmit(int Size, int Abort, int FCSerr, int NonByteAligned, int Overflow, int Drop, int SkipRead);
+    logic [127:0][7:0] TransmitData;
+    logic       [15:0] FCSBytes;
+    logic   [2:0][7:0] OverflowData;
+    logic TxDone;
+    logic [7:0] ReadData;
+    string msg;
+
+    if(Abort)
+      msg = "- Abort";
+    else if(FCSerr)
+      msg = "- FCS error";
+    else if(NonByteAligned)
+      msg = "- Non-byte aligned";
+    else if(Overflow)
+      msg = "- Overflow";
+    else if(Drop)
+      msg = "- Drop";
+    else if(SkipRead)
+      msg = "- Skip read";
+    else
+      msg = "- Normal";
+
+
+    $display("*************************************************************");
+    $display("%t - Starting task Transmit %s", $time, msg);
+    $display("*************************************************************");
+
+
+    for (int i = 0; i < Size; i++) begin
+      TransmitData[i] = $urandom;
+    end
+    TransmitData[Size]   = '0;
+    TransmitData[Size+1] = '0;
+
+	  GenerateFCSBytes(TransmitData, Size, FCSBytes);
+	  TransmitData[Size] = FCSBytes[7:0];
+	  TransmitData[Size+1]   = FCSBytes[15:8];
+
+
+    if(Overflow) begin
+	        OverflowData[0] = 8'h44;
+	        OverflowData[1] = 8'hBB;
+	        OverflowData[2] = 8'hCC;
+            MakeTxStimulus(TransmitData, Size, OverflowData, 3);
+        end else begin
+            MakeTxStimulus(TransmitData, Size, OverflowData, 0);
+        end
+
+        // Assert that Tx_Overflow is asserted
+        if (Overflow) begin
+            ReadAddress(`Tx_SC_address, ReadData);
+            assert (ReadData == 8'h10) begin
+                $display("PASS: Tx_Overflow asserted");
+            end else begin
+                $error("FAIL: Tx_Overflow not asserted");
+                TbErrorCnt++;
+            end
+        end
+
+    // Start transmission
+    WriteAddress(`Tx_SC_address, 8'h02);
+
+    PrintByteArrayHex("Transmit Data", TransmitData, Size);
+    PrintTxBufferHex(Size);
+    if(Abort)
+      VerifyAbortTransmit(TransmitData, Size);
+    else if(Overflow)
+      VerifyOverflowTransmit(TransmitData, Size);
+    else if(!SkipRead)
+      VerifyNormalTransmit(TransmitData, Size);
 
     #5000ns;
   endtask

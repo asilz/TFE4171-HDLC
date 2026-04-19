@@ -15,16 +15,57 @@
 */
 
 module assertions_hdlc (
-  output int   ErrCntAssertions,
-  input  logic Clk,
-  input  logic Rst,
-  input  logic Rx,
-  input  logic Rx_FlagDetect,
-  input  logic Rx_ValidFrame,
-  input  logic Rx_AbortDetect,
-  input  logic Rx_AbortSignal,
-  input  logic Rx_Overflow,
-  input  logic Rx_WrBuff
+    output int                ErrCntAssertions,
+    input  logic              Clk,
+    input  logic              Rst,
+    input  logic [2:0]        Address,
+    input  logic              WriteEnable,
+    input  logic              ReadEnable,
+    input  logic [7:0]        DataIn,
+    input  logic [7:0]        DataOut,
+    input  logic              Rx,
+    input  logic              RxEN,
+    input  logic              Rx_Ready,
+    input  logic              Rx_ValidFrame,
+    input  logic              Rx_WrBuff,
+    input  logic              Rx_EoF,
+    input  logic              Rx_AbortSignal,
+    input  logic              Rx_FrameError,
+    input  logic              Rx_StartFCS,
+    input  logic              Rx_StopFCS,
+    input  logic [7:0]        Rx_Data,
+    input  logic              Rx_NewByte,
+    input  logic              Rx_FlagDetect,
+    input  logic              Rx_AbortDetect,
+    input  logic              RxD,
+    input  logic              Rx_FCSerr,
+    input  logic [7:0]        Rx_FrameSize,
+    input  logic              Rx_Overflow,
+    input  logic [7:0]        Rx_DataBuffOut,
+    input  logic              Rx_FCSen,
+    input  logic              Rx_RdBuff,
+    input  logic              Rx_Drop,
+    input  logic              Tx,
+    input  logic              TxEN,
+    input  logic              Tx_Done,
+    input  logic              Tx_ValidFrame,
+    input  logic              Tx_AbortedTrans,
+    input  logic              Tx_WriteFCS,
+    input  logic              Tx_InitZero,
+    input  logic              Tx_StartFCS,
+    input  logic              Tx_RdBuff,
+    input  logic              Tx_NewByte,
+    input  logic              Tx_FCSDone,
+    input  logic [7:0]        Tx_Data,
+    input  logic              Tx_Full,
+    input  logic              Tx_DataAvail,
+    input  logic [7:0]        Tx_FrameSize,
+    input  logic [127:0][7:0] Tx_DataArray,
+    input  logic [7:0]        Tx_DataOutBuff,
+    input  logic              Tx_WrBuff,
+    input  logic              Tx_Enable,
+    input  logic [7:0]        Tx_DataInBuff,
+    input  logic              Tx_AbortFrame
 );
 
   initial begin
@@ -66,6 +107,21 @@ module assertions_hdlc (
   end else begin 
     $error("AbortSignal did not go high after AbortDetect during validframe"); 
     ErrCntAssertions++; 
+  end
+
+  /* 1 already done in PART A */
+  /* 2 already done in PART A */
+  /* 3 already done in PART A */
+
+  /* 13 */
+  property RX_Overflow;
+	  @(posedge Clk) (Rx_FrameSize > 8'd126) |-> Rx_Overflow;
+  endproperty
+  RX_Overflow_Assert : assert property (RX_Overflow) begin
+    $display("PASS: Overflow Asserted when receiving more than 128 bytes");
+  end else begin 
+    $error("More than 128 bytes received and overflow was not asserted"); 
+    ErrCntAssertions++;
   end
 
 endmodule
