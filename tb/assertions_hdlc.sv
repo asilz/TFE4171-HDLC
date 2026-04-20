@@ -102,6 +102,8 @@ module assertions_hdlc (
     @(posedge Clk) Rx_ValidFrame and Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 !Rx |-> Rx_AbortSignal;
   endproperty
 
+  /* 10. Abort pattern detected during valid frame should generate
+  * Rx_AbortSignal */
   RX_AbortSignal_Assert : assert property (RX_AbortSignal) begin
     $display("PASS: Abort signal");
   end else begin 
@@ -109,19 +111,17 @@ module assertions_hdlc (
     ErrCntAssertions++; 
   end
 
-  /* 1 already done in PART A */
-  /* 2 already done in PART A */
-  /* 3 already done in PART A */
-
-  /* 13 */
-  property RX_Overflow;
-	  @(posedge Clk) (Rx_FrameSize > 8'd126) |-> Rx_Overflow;
+  /* 12. When a whole RX frame has been received, check if end of frame is generated */ 
+  property RX_EndOfFrame;
+    @(posedge Clk) disable iff (!Rst) $fell(Rx_ValidFrame) |=> $rose(Rx_EoF);
   endproperty
-  RX_Overflow_Assert : assert property (RX_Overflow) begin
-    $display("PASS: Overflow Asserted when receiving more than 128 bytes");
+
+  RX_EndOfFrame_Assert : assert property (RX_EndOfFrame) begin
+    $display("PASS: End of frame asserted");
   end else begin 
-    $error("More than 128 bytes received and overflow was not asserted"); 
-    ErrCntAssertions++;
+    $error("End of frame did not go high after a valid frame"); 
+    ErrCntAssertions++; 
   end
+
 
 endmodule
