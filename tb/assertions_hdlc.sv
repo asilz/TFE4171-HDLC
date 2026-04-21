@@ -82,7 +82,7 @@ module assertions_hdlc (
 
   // Check if flag sequence is detected
   property RX_FlagDetect;
-    @(posedge Clk) Rx_flag |-> ##2 Rx_FlagDetect;
+    @(posedge Clk) disable iff (!Rst) Rx_flag |-> ##2 Rx_FlagDetect;
   endproperty
 
   RX_FlagDetect_Assert : assert property (RX_FlagDetect) begin
@@ -96,10 +96,14 @@ module assertions_hdlc (
    *  Verify correct Rx_AbortSignal behavior  *
    ********************************************/
 
+  sequence Rx_abort;
+    Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 !Rx;
+  endsequence
+
   //If abort is detected during valid frame. then abort signal should go high
   // Part A: Concurrent Assertions: Task 2
   property RX_AbortSignal;
-    @(posedge Clk) Rx_ValidFrame and Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 Rx ##1 !Rx |-> Rx_AbortSignal;
+    @(posedge Clk) disable iff (!Rst) Rx_AbortDetect and Rx_ValidFrame |-> ##2  Rx_AbortSignal;
   endproperty
 
   /* 10. Abort pattern detected during valid frame should generate
