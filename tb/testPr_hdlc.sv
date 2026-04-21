@@ -346,7 +346,6 @@ program testPr_hdlc(
     logic [4:0] historyBuf;
     logic [7:0] flag;
     logic [7:0] end_sr;
-    logic [15:0] fcs;
     bit end_flag_seen;
 
     ReadAddress(`Tx_SC_address, ReadDataSC); // Read RX status/control register
@@ -429,7 +428,7 @@ program testPr_hdlc(
             fcs_assert: assert(uin_hdlc.Tx === data[i+Size][j]) begin
                     $display("[%0t] PASS. Correct CRC bit %b", $time, uin_hdlc.Tx);
             end else begin
-                    $error("[%0t] VerifyNormalTransmit incorrect CRC bit %b, expected: %b", $time, uin_hdlc.Tx, fcs[i]);
+                    $error("[%0t] VerifyNormalTransmit incorrect CRC bit %b, expected: %b", $time, uin_hdlc.Tx, data[i+Size][j]);
                     TbErrorCnt++;
             end
     end

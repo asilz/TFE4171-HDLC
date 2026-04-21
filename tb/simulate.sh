@@ -17,7 +17,7 @@ then
   	echo vsim -assertdebug -voptargs="+acc" test_hdlc bind_hdlc -do "log -r *" &
   	exit
 else
-	if vsim -assertdebug -c -voptargs="+acc" test_hdlc bind_hdlc -do "log -r *; run -all; exit" 
+	if vsim -coverage -assertdebug -c -voptargs="+acc" test_hdlc bind_hdlc -do "coverage save -onexit -codeAll -cvg -assert coverage.ucdb; log -r *; run -all; exit" 
 	then
 		echo "Success"
 	else

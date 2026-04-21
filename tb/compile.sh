@@ -6,7 +6,7 @@ NC='\033[0m'
 vlib work 
 
 printf "${RED}\nCompiling design${NC}\n"
-if vlog -sv ../rtl/*.sv 
+if vlog +cover -sv ../rtl/*.sv 
 then
 	echo "Success"
 else
